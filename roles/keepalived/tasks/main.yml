@@ -1,0 +1,27 @@
+---
+- name: Install Keepalived
+  dnf:
+    name: keepalived
+    state: present
+
+- name: Template Keepalived configuration
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Keepalived
+
+- name: Ensure Keepalived is started and enabled
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+
+- name: Allow VRRP protocol in firewalld
+  firewalld:
+    rich_rule: 'rule protocol value="vrrp" accept'
+    permanent: yes
+    state: enabled
+    immediate: yes

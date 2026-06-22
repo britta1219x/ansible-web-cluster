@@ -1,0 +1,30 @@
+---
+- name: Update system packages
+  dnf:
+    name: '*'
+    state: latest
+    update_cache: yes
+
+- name: Install common tools and dependencies
+  dnf:
+    name:
+      - curl
+      - wget
+      - vim
+      - git
+      - net-tools
+      - firewalld
+      - python3-pip
+      - openssl
+      - libselinux-python3
+    state: present
+
+- name: Enable and start firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Set timezone to Asia/Shanghai
+  timezone:
+    name: Asia/Shanghai

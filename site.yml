@@ -1,0 +1,29 @@
+---
+- name: 全节点初始化
+  hosts: all
+  become: true
+  roles:
+    - common
+    - nginx
+
+- name: 部署 Keepalived（仅 lb 节点）
+  hosts: lb
+  become: true
+  roles:
+    - keepalived
+
+- name: 集群健康检查
+  hosts: all
+  become: true
+  post_tasks:
+    - name: Check node health status
+      check_node_health:
+      register: health
+      ignore_errors: yes
+    - name: Display cluster health report
+      debug:
+        msg: |
+          Node: {{ inventory_hostname }}
+          Nginx Status: {{ health.nginx_status | default('N/A') }}
+          Keepalived Status: {{ health.keepalived_status | default('N/A') }}
+          VIP Status: {{ health.vip_status | default('N/A') }}

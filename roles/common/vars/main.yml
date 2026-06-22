@@ -1,0 +1,11 @@
+---
+# 通用变量
+timezone: Asia/Shanghai
+
+# 常用端口（后续 nginx 和 keepalived 会用到）
+http_port: 80
+https_port: 443
+
+# Keepalived 配置（后面会使用）
+vip: 192.168.56.200
+interface: eth0        # 根据你的网卡名称修改（可用 ip addr 查看）
