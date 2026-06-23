@@ -19,13 +19,24 @@
     mode: '0644'
   notify: Reload Nginx
 
-- name: Template default site configuration
+- name: Template lb site configuration
   template:
     src: default.conf.j2
     dest: /etc/nginx/conf.d/default.conf
     owner: root
     group: root
     mode: '0644'
+  when: inventory_hostname in groups['lb']
+  notify: Reload Nginx
+
+- name: Template web site configuration
+  template:
+    src: web.conf.j2
+    dest: /etc/nginx/conf.d/default.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname in groups['webservers'] and inventory_hostname not in groups['lb']
   notify: Reload Nginx
 
 - name: Create web root directory
@@ -45,4 +56,16 @@
     dest: /var/www/html/index.html
     owner: nginx
     group: nginx
-    mode: '0644'
+    mode: '0644
+      
+- name: 清理多余的 nginx 配置文件
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/conf.d/app.conf
+    - /etc/nginx/conf.d/default.conf.rpmnew
+    - /etc/nginx/conf.d/port_8888.conf
+    - /etc/nginx/conf.d/port_8889.conf
+    - /etc/nginx/conf.d/port_8890.conf
+  notify: Reload Nginx'
