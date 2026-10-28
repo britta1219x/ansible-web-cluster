@@ -18,10 +18,11 @@
   post_tasks:
     - name: Check node health status
       check_node_health:
+        vip: "{{ vip }}"
       register: health
-      ignore_errors: yes
+      ignore_errors: true
     - name: Display cluster health report
-      debug:
+      ansible.builtin.debug:
         msg: |
           Node: {{ inventory_hostname }}
           Nginx Status: {{ health.nginx_status | default('N/A') }}

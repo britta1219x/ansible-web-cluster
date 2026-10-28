@@ -1,11 +1,11 @@
 ---
 - name: Install Keepalived
-  dnf:
+  ansible.builtin.dnf:
     name: keepalived
     state: present
 
 - name: Template Keepalived configuration
-  template:
+  ansible.builtin.template:
     src: keepalived.conf.j2
     dest: /etc/keepalived/keepalived.conf
     owner: root
@@ -14,14 +14,14 @@
   notify: Restart Keepalived
 
 - name: Ensure Keepalived is started and enabled
-  systemd:
+  ansible.builtin.systemd:
     name: keepalived
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Allow VRRP protocol in firewalld
-  firewalld:
+  ansible.posix.firewalld:
     rich_rule: 'rule protocol value="vrrp" accept'
-    permanent: yes
+    permanent: true
     state: enabled
-    immediate: yes
+    immediate: true

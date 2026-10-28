@@ -1,12 +1,12 @@
 ---
-- name: Update system packages
-  dnf:
+- name: Update system packages  # noqa: package-latest —— 初始化时有意做全量更新
+  ansible.builtin.dnf:
     name: '*'
     state: latest
-    update_cache: yes
+    update_cache: true
 
 - name: Install common tools and dependencies
-  dnf:
+  ansible.builtin.dnf:
     name:
       - curl
       - wget
@@ -20,11 +20,11 @@
     state: present
 
 - name: Enable and start firewalld
-  systemd:
+  ansible.builtin.systemd:
     name: firewalld
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Set timezone to Asia/Shanghai
-  timezone:
+  community.general.timezone:
     name: Asia/Shanghai

@@ -1,2 +1,3 @@
 ---
-vip: 192.168.127.200
+# VIP 不再单独定义在这里：统一在 inventory/hosts.ini 的 [all:vars] 中维护，
+# 健康检查模块与 Keepalived 模板都从同一个变量取值，避免两处不一致。

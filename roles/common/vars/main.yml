@@ -1,11 +1,4 @@
 ---
-# 通用变量
-timezone: Asia/Shanghai
-
-# 常用端口（后续 nginx 和 keepalived 会用到）
-http_port: 80
-https_port: 443
-
-# Keepalived 配置（后面会使用）
-vip: 192.168.56.200
-interface: eth0        # 根据你的网卡名称修改（可用 ip addr 查看）
+# 通用变量目前没有需要集中定义的值：
+# - 时区在 common 角色的任务中直接指定（Asia/Shanghai）
+# - VIP 统一在 inventory/hosts.ini 的 [all:vars] 中定义，避免多处不一致

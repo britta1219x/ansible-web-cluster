@@ -1,17 +1,17 @@
 ---
 - name: Install Nginx
-  dnf:
+  ansible.builtin.dnf:
     name: nginx
     state: present
 
 - name: Ensure Nginx is started and enabled
-  systemd:
+  ansible.builtin.systemd:
     name: nginx
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Template Nginx main configuration
-  template:
+  ansible.builtin.template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
     owner: root
@@ -20,7 +20,7 @@
   notify: Reload Nginx
 
 - name: Template lb site configuration
-  template:
+  ansible.builtin.template:
     src: default.conf.j2
     dest: /etc/nginx/conf.d/default.conf
     owner: root
@@ -30,7 +30,7 @@
   notify: Reload Nginx
 
 - name: Template web site configuration
-  template:
+  ansible.builtin.template:
     src: web.conf.j2
     dest: /etc/nginx/conf.d/default.conf
     owner: root
@@ -40,7 +40,7 @@
   notify: Reload Nginx
 
 - name: Create web root directory
-  file:
+  ansible.builtin.file:
     path: /var/www/html
     state: directory
     owner: nginx
@@ -48,7 +48,7 @@
     mode: '0755'
 
 - name: Deploy index.html test page
-  copy:
+  ansible.builtin.copy:
     content: |
       <h1>Welcome to Ansible Deployed Web Cluster</h1>
       <p>Node: {{ inventory_hostname }}</p>
@@ -56,10 +56,10 @@
     dest: /var/www/html/index.html
     owner: nginx
     group: nginx
-    mode: '0644
-      
+    mode: '0644'
+
 - name: 清理多余的 nginx 配置文件
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
@@ -68,4 +68,4 @@
     - /etc/nginx/conf.d/port_8888.conf
     - /etc/nginx/conf.d/port_8889.conf
     - /etc/nginx/conf.d/port_8890.conf
-  notify: Reload Nginx'
+  notify: Reload Nginx

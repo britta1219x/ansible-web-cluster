@@ -1,10 +1,18 @@
+# 纯 Web 节点（node3）站点配置
 server {
-    listen 80;
-    server_name _;
-    root /var/www/html;
-    index index.html;
+    listen       80;
+    server_name  _;
+
+    root   /var/www/html;
+    index  index.html;
 
     location / {
         try_files $uri $uri/ =404;
+    }
+
+    location = /health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok from {{ inventory_hostname }}\n";
     }
 }

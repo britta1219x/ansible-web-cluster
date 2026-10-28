@@ -1,20 +1,18 @@
-upstream backend {
-    server {{ hostvars['node3']['ansible_host'] }}:80;
-}
-
+# lb 节点（node1 / node2）站点配置：VIP 当前落在哪台，就由哪台响应
 server {
-    listen 80;
-    server_name _;
+    listen       80 default_server;
+    server_name  _;
+
+    root   /var/www/html;
+    index  index.html;
 
     location / {
-        proxy_pass http://backend;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        try_files $uri $uri/ =404;
     }
 
-    location /status {
-        stub_status on;
+    location = /health {
         access_log off;
+        default_type text/plain;
+        return 200 "ok from {{ inventory_hostname }}\n";
     }
 }
