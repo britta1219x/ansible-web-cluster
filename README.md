@@ -1,51 +1,49 @@
 # 基于 Ansible 的 Web 集群自动化部署
 
-## 项目简介
+![CI](https://github.com/britta1219x/ansible-web-cluster/actions/workflows/ci.yml/badge.svg)
 
-使用 Ansible 实现 3 节点 Web 高可用集群的全自动化部署，一键完成环境初始化、Nginx 部署、Keepalived 主备配置及健康检查，部署耗时约 10 分钟。
+使用 Ansible 实现 3 节点 Web 高可用集群的全自动化部署：一键完成环境初始化、Nginx 部署、Keepalived 主备配置及健康检查，部署耗时约 10 分钟。
 
-## 架构图
-VIP: 192.168.127.200
-                       │
-      ┌────────────────┴────────────────┐
-      │                                 │
-[node1] MASTER                    [node2] BACKUP
- Keepalived + Nginx                Keepalived + Nginx
-      │                                 │
-      └──────────────┬──────────────────┘
-                     │
-               [node3] Web
-                  Nginx
+## 架构
+
+```mermaid
+flowchart TB
+    U[用户 / 客户端] --> VIP[[VIP 192.168.127.200]]
+    VIP --> N1["node1 · MASTER<br/>Keepalived + Nginx"]
+    VIP -. VIP 漂移（主节点故障时） .-> N2["node2 · BACKUP<br/>Keepalived + Nginx"]
+    N1 <-. VRRP 心跳 .-> N2
+    N3["node3 · Web<br/>Nginx"]
+```
+
+- node1 / node2 组成 lb 组：都运行 Nginx，VIP 平时落在 MASTER（node1）上，主节点故障时自动漂移到 BACKUP（node2），切换时间 < 3s。
+- node3 为纯 Web 节点，运行 Nginx 提供站点服务。
+- VIP 只在 `inventory/hosts.ini` 的 `[all:vars]` 中定义一处，Keepalived 模板与健康检查模块都从同一变量取值。
+
 ## 技术栈
 
 - **Ansible** — 自动化部署与配置管理
 - **Nginx** — Web 服务与反向代理
-- **Keepalived** — VIP 主备漂移
+- **Keepalived** — 基于 VRRP 的 VIP 主备漂移
 - **Rocky Linux 10** — 运行环境
 - **Python** — 自定义 Ansible Module
 
 ## 项目结构
+
+```text
 ansible-web-cluster/
-
+├── .github/workflows/     # CI：语法检查 + ansible-lint
 ├── inventory/
-
-│   └── hosts.ini          # 节点定义与分组
-
+│   └── hosts.ini          # 节点定义与分组（VIP 也在这里统一定义）
 ├── roles/
-
-│   ├── common/            # 系统初始化（防火墙、时区、依赖）
-
-│   ├── nginx/             # Nginx 安装与配置下发
-
-│   └── keepalived/        # Keepalived 主备配置
-
+│   ├── common/            # 系统初始化（软件包、防火墙、时区）
+│   ├── nginx/             # Nginx 安装、主配置与站点模板下发
+│   └── keepalived/        # Keepalived 主备配置（状态/优先级取自 inventory）
 ├── custom_module/
-
-│   └── check_node_health.py  # 自定义健康检查 Module
-
-├── site.yml               # 主入口 Playbook
-
+│   └── check_node_health.py  # 自定义健康检查 Module（VIP 由参数传入）
+├── site.yml               # 主入口 Playbook（初始化 → Keepalived → 健康检查）
 └── ansible.cfg
+```
+
 ## 核心功能
 
 - **一键部署**：`ansible-playbook site.yml` 完成全集群初始化
@@ -74,13 +72,9 @@ node3 ansible_host=192.168.x.103
 [lb]
 node1 keepalived_state=MASTER keepalived_priority=100
 node2 keepalived_state=BACKUP  keepalived_priority=90
-```
 
-### 修改 VIP 地址
-
-```yaml
-# roles/keepalived/vars/main.yml
-vip: 192.168.x.200  # 改为同网段未使用的 IP
+[all:vars]
+vip=192.168.x.200  # 改为同网段未使用的 IP，全仓库只改这一处
 ```
 
 ### 一键部署
@@ -103,15 +97,33 @@ curl http://<VIP>
 ```
 
 ## 部署效果
+
+```text
 PLAY RECAP
-
 node1 : ok=20  changed=5  failed=0
-
 node2 : ok=20  changed=5  failed=0
-
 node3 : ok=14  changed=1  failed=0
-健康检查输出：Node: node1 | Nginx: active | Keepalived: active | VIP: active
+```
 
-Node: node2 | Nginx: active | Keepalived: active | VIP: standby
+健康检查输出：
 
-Node: node3 | Nginx: active | Keepalived: N/A    | VIP: standby
+```text
+Node: node1 | Nginx: active | Keepalived: active  | VIP: active
+Node: node2 | Nginx: active | Keepalived: active  | VIP: standby
+Node: node3 | Nginx: active | Keepalived: N/A     | VIP: standby
+```
+
+## 代码质量
+
+每次 push 与 Pull Request 都会在 GitHub Actions 中自动执行：
+
+- `ansible-playbook --syntax-check`：Playbook 语法检查
+- `ansible-lint`：按官方推荐规则检查 roles 与 Playbook（当前 0 违规）
+
+本地也可以直接运行：
+
+```bash
+pip install ansible ansible-lint
+ansible-playbook -i inventory/hosts.ini site.yml --syntax-check
+ansible-lint site.yml roles/ inventory/
+```
