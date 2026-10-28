@@ -15,8 +15,8 @@ flowchart TB
     N3["node3 · Web<br/>Nginx"]
 ```
 
-- node1 / node2 组成 lb 组：都运行 Nginx，VIP 平时落在 MASTER（node1）上，主节点故障时自动漂移到 BACKUP（node2），切换时间 < 3s。
-- node3 为纯 Web 节点，运行 Nginx 提供站点服务。
+- node1 / node2 组成 lb 组：都运行 Nginx 作反向代理（upstream 指向 node3），VIP 平时落在 MASTER（node1）上，主节点故障时自动漂移到 BACKUP（node2），切换时间 < 3s。
+- node3 为纯 Web 节点，运行 Nginx 提供站点静态服务，是 lb 反向代理的后端。
 - VIP 只在 `inventory/hosts.ini` 的 `[all:vars]` 中定义一处，Keepalived 模板与健康检查模块都从同一变量取值。
 
 ## 技术栈
